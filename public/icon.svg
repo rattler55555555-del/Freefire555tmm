@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a192f"/>
+      <stop offset="100%" stop-color="#050c18"/>
+    </linearGradient>
+    <linearGradient id="shield-stroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00d2ff"/>
+      <stop offset="50%" stop-color="#3a7bd5"/>
+      <stop offset="100%" stop-color="#ff7300"/>
+    </linearGradient>
+    <linearGradient id="cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f2fe"/>
+      <stop offset="100%" stop-color="#4facfe"/>
+    </linearGradient>
+    <linearGradient id="flame-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffea00"/>
+      <stop offset="45%" stop-color="#ff7700"/>
+      <stop offset="100%" stop-color="#ff1e00"/>
+    </linearGradient>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffc837"/>
+      <stop offset="100%" stop-color="#ff8008"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Outer Rounded Container -->
+  <rect width="512" height="512" rx="128" fill="#040b17"/>
+  
+  <!-- Outer Shield Outline with Gradient Glow -->
+  <path d="M256 60 L395 110 C395 240 345 350 256 420 C167 350 117 240 117 110 Z" 
+        fill="#071324" stroke="url(#shield-stroke)" stroke-width="12" stroke-linejoin="round" filter="url(#glow)"/>
+
+  <!-- Left Shield Half Decorative Lines (Esports Tech) -->
+  <path d="M145 150 L210 150 L180 230 L140 230" fill="none" stroke="url(#cyan-glow)" stroke-width="8" stroke-linecap="round" opacity="0.85"/>
+  <circle cx="180" cy="290" r="28" fill="none" stroke="url(#cyan-glow)" stroke-width="6" opacity="0.75"/>
+  <path d="M165 275 L195 305 M165 305 L195 275" stroke="url(#cyan-glow)" stroke-width="4" opacity="0.65"/>
+
+  <!-- Right Shield Half Decorative Accents (Gamepad / Stars) -->
+  <!-- 4-point Sparkle Star -->
+  <path d="M330 200 L342 225 L367 237 L342 249 L330 274 L318 249 L293 237 L318 225 Z" fill="url(#gold-grad)"/>
+  <!-- D-Pad Gamepad Icon -->
+  <g transform="translate(310, 290)">
+    <rect x="8" y="0" width="12" height="28" rx="3" fill="url(#gold-grad)"/>
+    <rect x="0" y="8" width="28" height="12" rx="3" fill="url(#gold-grad)"/>
+  </g>
+
+  <!-- Center Torch Handle and Basin -->
+  <path d="M228 270 L284 270 L272 380 L240 380 Z" fill="url(#cyan-glow)" stroke="#040b17" stroke-width="4"/>
+  <rect x="220" y="255" width="72" height="18" rx="6" fill="#1e3a8a" stroke="url(#shield-stroke)" stroke-width="4"/>
+
+  <!-- Torch Flame (Dynamic Multi-layered) -->
+  <!-- Outer Flame -->
+  <path d="M256 95 C280 135 315 170 305 220 C295 248 275 260 256 260 C237 260 217 248 207 220 C197 170 232 135 256 95 Z" fill="url(#flame-grad)"/>
+  <!-- Inner Flame -->
+  <path d="M256 130 C270 155 290 185 285 220 C280 240 268 250 256 250 C244 250 232 240 227 220 C222 185 242 155 256 130 Z" fill="#ffe066"/>
+  <!-- Torch Athlete Silhouette Core -->
+  <circle cx="256" cy="180" r="14" fill="#00e5ff"/>
+  <path d="M256 198 C242 198 238 215 242 242 L270 242 C274 215 270 198 256 198 Z" fill="#00e5ff"/>
+
+  <!-- Top Flame Star -->
+  <polygon points="340,95 345,108 359,109 348,118 352,132 340,124 328,132 332,118 321,109 335,108" fill="#ffd166"/>
+</svg>
