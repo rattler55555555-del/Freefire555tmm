@@ -17,14 +17,18 @@ interface AuthProps {
 }
 
 const DEFAULT_USER_DATA = {
-  walletBalance: 100,
-  bonus: 100,
-  winnings: 0,
+  wallet: {
+    deposit: 100,
+    winnings: 0,
+    bonus: 100,
+  },
+  walletBalance: 200,
   isKycVerified: false,
   stats: {
     matchesPlayed: 0,
     totalKills: 0,
     totalWinnings: 0,
+    totalWins: 0,
   }
 };
 
@@ -34,6 +38,14 @@ export default function Auth({ onLogin }: AuthProps) {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   
+  // Instant bypass if already logged in (e.g. back button pressed)
+  React.useEffect(() => {
+    if (auth.currentUser) {
+      console.log("[Auth] Already logged in as", auth.currentUser.email, "-> skipping login screen");
+      onLogin();
+    }
+  }, [onLogin]);
+
   // Form State
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -133,34 +145,37 @@ export default function Auth({ onLogin }: AuthProps) {
     setLoading(true);
     try {
       if (isLogin) {
-        // Handle Login with special support for battlegrid2.0@gmail.com
-        const passwordsToTry = isAdminEmail 
-          ? [password, `${password}55`, `${password}00`, '555555', 'battlegrid5555']
-          : [password];
-        
+        // Fast direct login attempt
         let signedIn = false;
         let lastError: any = null;
 
-        for (const pwd of passwordsToTry) {
-          try {
-            await withTimeout(signInWithEmailAndPassword(auth, email.trim(), pwd), 4000, 'Login taking too long. Check connection.');
-            signedIn = true;
-            break;
-          } catch (error: any) {
-            lastError = error;
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-              continue;
+        try {
+          await withTimeout(signInWithEmailAndPassword(auth, email.trim(), password), 2500, 'Login request timeout.');
+          signedIn = true;
+        } catch (err: any) {
+          lastError = err;
+          // If admin email and password failed, quickly test known master passwords
+          if (isAdminEmail && (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential')) {
+            const adminFallbacks = ['battlegrid5555', '555555', `${password}55`];
+            for (const fallback of adminFallbacks) {
+              try {
+                await withTimeout(signInWithEmailAndPassword(auth, email.trim(), fallback), 1500, 'Admin fallback timeout');
+                signedIn = true;
+                break;
+              } catch (fallbackErr: any) {
+                lastError = fallbackErr;
+              }
             }
           }
         }
 
         // If admin account doesn't exist yet, auto-register it!
-        if (!signedIn && isAdminEmail) {
+        if (!signedIn && isAdminEmail && lastError?.code === 'auth/user-not-found') {
           try {
             const regPwd = password.length >= 6 ? password : `${password}55`;
             const userCredential = await withTimeout(
               createUserWithEmailAndPassword(auth, email.trim(), regPwd),
-              5000,
+              3500,
               'Admin creation taking too long.'
             );
             await setDoc(doc(db, 'users', userCredential.user.uid), {

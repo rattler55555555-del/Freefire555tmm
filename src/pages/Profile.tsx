@@ -13,7 +13,8 @@ import {
   ShieldAlert,
   LogOut,
   ChevronRight,
-  X
+  X,
+  Smartphone
 } from 'lucide-react';
 import { Page, User } from '../types';
 import SupportModal from '../components/SupportModal';
@@ -331,6 +332,40 @@ export default function ProfilePage({ user, onPageChange, onLogout }: ProfilePag
               <ChevronRight size={18} className="text-emerald-700 group-hover:translate-x-0.5 transition-transform" />
             </div>
           </a>
+
+          {/* Card 8.2: Download / Install Android App */}
+          <button
+            onClick={() => {
+              const deferredPrompt = (window as any).deferredPrompt;
+              if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                  (window as any).deferredPrompt = null;
+                });
+              } else {
+                alert('Arena Khel Android App Install:\n\nTap the 3 dots in your Chrome/browser menu and select "Install App" or "Add to Home screen" to install.');
+              }
+            }}
+            className="w-full bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 active:bg-blue-200 rounded-xl sm:rounded-2xl px-4 py-3.5 flex items-center justify-between border border-blue-200 shadow-xs group transition-all"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                <Smartphone size={18} />
+              </div>
+              <div className="text-left">
+                <span className="text-sm font-bold text-blue-950 tracking-tight block">
+                  Install Arena Khel Android App
+                </span>
+                <span className="text-[10px] text-blue-700 font-medium block">
+                  Add to Home Screen (Instant APK / PWA)
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-100 px-2 py-0.5 rounded-md">Install</span>
+              <ChevronRight size={18} className="text-blue-700 group-hover:translate-x-0.5 transition-transform" />
+            </div>
+          </button>
 
           {/* Card 8.5: Help & Support Center */}
           <button

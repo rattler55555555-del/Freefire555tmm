@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Coins, Bell, MessageSquare } from 'lucide-react';
+import { Coins, Bell, MessageSquare, Smartphone } from 'lucide-react';
 import { Page, User } from '../types';
 import { db } from '../lib/firebase';
 import { collection, onSnapshot, query, limit } from 'firebase/firestore';
+import AndroidInstallModal from './AndroidInstallModal';
 
 interface HomeHeaderProps {
   user: User;
@@ -14,6 +15,7 @@ export default function HomeHeader({ user, onPageChange, onOpenNotifications }: 
   const displayName = user?.username || 'Arena Khel';
   const totalBalance = (user?.wallet?.deposit || 0) + (user?.wallet?.winnings || 0) + (user?.wallet?.bonus || 0);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showInstallModal, setShowInstallModal] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'notifications'), limit(15));
@@ -73,6 +75,15 @@ export default function HomeHeader({ user, onPageChange, onOpenNotifications }: 
 
         {/* Right: WhatsApp Support + Notifications Bell + Balance Card */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Android App Download & Install */}
+          <button
+            onClick={() => setShowInstallModal(true)}
+            className="w-9 h-9 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-400 flex items-center justify-center active:scale-95 transition-all shadow-sm"
+            title="Download Android App"
+          >
+            <Smartphone size={17} className="stroke-[2.2]" />
+          </button>
+
           {/* WhatsApp Support Team & Channel */}
           <a
             href="https://whatsapp.com/channel/0029Vb8LgeD0QeasJdM18j38"
@@ -113,6 +124,8 @@ export default function HomeHeader({ user, onPageChange, onOpenNotifications }: 
           </button>
         </div>
       </div>
+
+      <AndroidInstallModal isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} />
     </header>
   );
 }

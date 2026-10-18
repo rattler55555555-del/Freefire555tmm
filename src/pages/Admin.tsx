@@ -177,6 +177,9 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [isBannerModalOpen, setIsBannerModalOpen] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [bannerTitle, setBannerTitle] = useState('');
+  const [bannerSubtitle, setBannerSubtitle] = useState('');
+  const [bannerBadge, setBannerBadge] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [redirectUrl, setRedirectUrl] = useState('');
   const [bannerType, setBannerType] = useState<Banner['type']>('main');
@@ -279,8 +282,10 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
       }
     }, (err) => handleFirestoreError(err, OperationType.GET, 'appSettings/referral_support'));
 
-    const unsubBanners = onSnapshot(query(collection(db, 'banners'), orderBy('order', 'asc')), (snapshot) => {
-      setBanners(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Banner)));
+    const unsubBanners = onSnapshot(collection(db, 'banners'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Banner));
+      list.sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+      setBanners(list);
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'banners'));
 
     const unsubGateways = onSnapshot(collection(db, 'paymentSettings'), (snapshot) => {
@@ -934,33 +939,47 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
 
   const handleSaveBanner = async () => {
     if (!imageUrl) return alert('Image URL is required');
-    setIsProcessing(true);
+    const toSaveTitle = bannerTitle.trim() || 'ARENA KHEL';
+    const toSaveSubtitle = bannerSubtitle.trim();
+    const toSaveBadge = bannerBadge.trim();
+    const toSaveImage = imageUrl.trim();
+    const toSaveRedirect = (bannerType === 'main' || bannerType === 'offer') ? redirectUrl.trim() : '';
+    const toSaveType = bannerType;
+    const toSaveOrder = Number(bannerOrder) || (banners.length + 1);
+    const existingId = editingBanner?.id;
+
+    // Immediately close modal and reset state for instant feedback
+    setIsBannerModalOpen(false);
+    setEditingBanner(null);
+    setBannerTitle('');
+    setBannerSubtitle('');
+    setBannerBadge('');
+    setImageUrl('');
+    setRedirectUrl('');
+
     try {
       const bannerData = {
-        imageUrl,
-        redirectUrl: (bannerType === 'main' || bannerType === 'offer') ? redirectUrl : '',
-        type: bannerType,
-        order: Number(bannerOrder),
+        title: toSaveTitle,
+        subtitle: toSaveSubtitle,
+        badgeText: toSaveBadge,
+        imageUrl: toSaveImage,
+        redirectUrl: toSaveRedirect,
+        type: toSaveType,
+        order: toSaveOrder,
         isActive: true,
         updatedAt: serverTimestamp()
       };
 
-      if (editingBanner?.id) {
-        await updateDoc(doc(db, 'banners', editingBanner.id), bannerData);
+      if (existingId) {
+        await updateDoc(doc(db, 'banners', existingId), bannerData);
       } else {
         await addDoc(collection(db, 'banners'), {
           ...bannerData,
           createdAt: serverTimestamp()
         });
       }
-      setIsBannerModalOpen(false);
-      setEditingBanner(null);
-      setImageUrl('');
-      setRedirectUrl('');
     } catch (e) {
       handleFirestoreError(e, OperationType.WRITE, 'banners');
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -1973,62 +1992,105 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
               <button 
                 onClick={() => {
                   setEditingBanner(null);
+                  setBannerTitle('');
+                  setBannerSubtitle('');
+                  setBannerBadge('');
                   setImageUrl('');
                   setRedirectUrl('');
                   setBannerType('main');
-                  setBannerOrder(banners.length);
+                  setBannerOrder(banners.length + 1);
                   setIsBannerModalOpen(true);
                 }}
-                className="w-full py-5 bg-purple-600 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-purple-600/20 active:scale-[0.98] transition-all"
+                className="w-full py-5 bg-purple-600 rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-purple-600/20 active:scale-[0.98] transition-all text-white"
               >
                 <Plus size={18} />
-                <span className="text-xs font-black uppercase tracking-widest">Add Promotion Banner</span>
+                <span className="text-xs font-black uppercase tracking-widest">Add New Banner</span>
               </button>
 
               <div className="space-y-4">
-                {banners.filter(b => b.isActive !== false).map((b) => (
-                  <div key={b.id} className="p-4 bg-neutral-900 border border-neutral-800 rounded-3xl group">
-                    <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 border border-white/5">
-                      <SafeImage 
-                        src={b.imageUrl} 
-                        alt="" 
-                        className="w-full h-full"
-                      />
-                      <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 z-20">
-                        <div className={`w-1.5 h-1.5 rounded-full ${b.type === 'main' || b.type === 'offer' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                        <span className="text-[8px] font-black uppercase text-white tracking-widest">{b.type}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-[8px] font-black uppercase text-neutral-600 tracking-widest mb-1">Order: {b.order}</p>
-                        {b.redirectUrl && <p className="text-[8px] font-black text-purple-400 truncate max-w-[150px]">{b.redirectUrl}</p>}
-                      </div>
-                      <div className="flex gap-2">
-                         <button 
-                          onClick={() => {
-                            setEditingBanner(b);
-                            setImageUrl(b.imageUrl);
-                            setRedirectUrl(b.redirectUrl || '');
-                            setBannerType(b.type);
-                            setBannerOrder(b.order);
-                            setIsBannerModalOpen(true);
-                          }}
-                          className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
-                         >
-                          <Edit2 size={16} />
-                         </button>
-                         <button 
-                          onClick={() => handleDeleteBanner(b.id!)}
-                          disabled={deletingBannerId === b.id}
-                          className="p-2.5 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
-                         >
-                          {deletingBannerId === b.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
-                         </button>
-                      </div>
-                    </div>
+                {banners.length === 0 ? (
+                  <div className="p-8 bg-neutral-900 border border-neutral-800 rounded-3xl text-center space-y-3">
+                    <p className="text-sm font-bold text-neutral-300">No Custom Banners in Database</p>
+                    <p className="text-xs text-neutral-500">Add a new banner above or initialize default Arena Khel banners to edit and customize them.</p>
+                    <button
+                      onClick={async () => {
+                        setIsProcessing(true);
+                        try {
+                          await addDoc(collection(db, 'banners'), {
+                            title: 'ARENA KHEL TOURNAMENTS',
+                            subtitle: 'Daily Free Fire CS & Battle Royale',
+                            badgeText: 'HOT',
+                            imageUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1200&auto=format&fit=crop',
+                            redirectUrl: 'https://whatsapp.com/channel/0029Vb8LgeD0QeasJdM18j38',
+                            type: 'main',
+                            order: 1,
+                            isActive: true,
+                            createdAt: serverTimestamp()
+                          });
+                        } catch (e) {
+                          console.error(e);
+                        } finally {
+                          setIsProcessing(false);
+                        }
+                      }}
+                      disabled={isProcessing}
+                      className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-black uppercase rounded-xl tracking-wider transition-all"
+                    >
+                      Initialize Starter Banner
+                    </button>
                   </div>
-                ))}
+                ) : (
+                  banners.filter(b => b.isActive !== false).map((b) => (
+                    <div key={b.id} className="p-4 bg-neutral-900 border border-neutral-800 rounded-3xl group">
+                      <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 border border-white/5">
+                        <SafeImage 
+                          src={b.imageUrl} 
+                          alt="" 
+                          className="w-full h-full"
+                        />
+                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10 flex items-center gap-2 z-20">
+                          <div className={`w-1.5 h-1.5 rounded-full ${b.type === 'main' || b.type === 'offer' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
+                          <span className="text-[8px] font-black uppercase text-white tracking-widest">{b.badgeText || b.type}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0 pr-2">
+                          <h4 className="text-sm font-black uppercase text-white truncate">{b.title || 'Untitled Banner'}</h4>
+                          {b.subtitle && <p className="text-[10px] text-amber-400 font-bold truncate">{b.subtitle}</p>}
+                          <p className="text-[8px] font-black uppercase text-neutral-500 tracking-widest mt-0.5">Order: {b.order}</p>
+                          {b.redirectUrl && <p className="text-[8px] font-black text-purple-400 truncate max-w-[200px]">{b.redirectUrl}</p>}
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                           <button 
+                            onClick={() => {
+                              setEditingBanner(b);
+                              setBannerTitle(b.title || '');
+                              setBannerSubtitle(b.subtitle || '');
+                              setBannerBadge(b.badgeText || '');
+                              setImageUrl(b.imageUrl);
+                              setRedirectUrl(b.redirectUrl || '');
+                              setBannerType(b.type);
+                              setBannerOrder(b.order);
+                              setIsBannerModalOpen(true);
+                            }}
+                            className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-all"
+                            title="Edit Banner"
+                           >
+                            <Edit2 size={16} />
+                           </button>
+                           <button 
+                            onClick={() => handleDeleteBanner(b.id!)}
+                            disabled={deletingBannerId === b.id}
+                            className="p-2.5 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all disabled:opacity-50"
+                            title="Delete Banner"
+                           >
+                            {deletingBannerId === b.id ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                           </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           )}
@@ -2524,28 +2586,86 @@ export default function AdminPage({ onPageChange }: AdminPageProps) {
                       </div>
                     </div>
                   )}
+
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[8px] font-black uppercase text-neutral-500">OR DIRECT URL</span>
+                      <div className="h-[1px] flex-1 bg-neutral-800" />
+                    </div>
+                    <input 
+                      type="url"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="Paste image URL (https://...)"
+                      className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-2.5 text-xs font-bold text-white outline-none focus:border-purple-500 placeholder:text-neutral-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Banner Title (e.g. Sonu Bihar CS2)</label>
+                  <input 
+                    type="text"
+                    value={bannerTitle}
+                    onChange={(e) => setBannerTitle(e.target.value)}
+                    placeholder="e.g. Sonu Bihar CS2 or Grand Tournament"
+                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Subtitle / Details</label>
+                  <input 
+                    type="text"
+                    value={bannerSubtitle}
+                    onChange={(e) => setBannerSubtitle(e.target.value)}
+                    placeholder="e.g. Starts 8 PM • Win ₹5000 Cash"
+                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Badge Tag</label>
+                  <input 
+                    type="text"
+                    value={bannerBadge}
+                    onChange={(e) => setBannerBadge(e.target.value)}
+                    placeholder="e.g. HOT, CS2, LIVE, FEATURED"
+                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Or Paste Direct Image URL</label>
+                  <input 
+                    type="text"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
+                  />
                 </div>
 
                 {(bannerType === 'main' || bannerType === 'offer') && (
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 ml-1">Redirect Link (Optional)</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Redirect Link (WhatsApp / Match URL)</label>
                     <input 
                       type="text"
                       value={redirectUrl}
                       onChange={(e) => setRedirectUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500"
+                      placeholder="https://whatsapp.com/channel/... or /tournaments"
+                      className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
                     />
                   </div>
                 )}
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-500 ml-1">Display Order</label>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
                   <input 
                     type="number"
                     value={bannerOrder}
                     onChange={(e) => setBannerOrder(Number(e.target.value))}
-                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:border-purple-500"
+                    className="w-full bg-black border border-neutral-800 rounded-xl px-4 py-3 text-xs font-bold text-white outline-none focus:border-purple-500"
                   />
                 </div>
 

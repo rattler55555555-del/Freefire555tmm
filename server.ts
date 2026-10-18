@@ -311,28 +311,7 @@ async function startServer() {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      // If ImgBB API Key is configured, upload original high-res image to ImgBB
-      const imgbbKey = process.env.IMGBB_API_KEY || process.env.IMAGEBB_API_KEY || process.env.VITE_IMGBB_API_KEY;
-      if (imgbbKey) {
-        try {
-          const rawBase64 = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
-          const formData = new URLSearchParams();
-          formData.append("image", rawBase64);
-          
-          const imgbbRes = await axios.post(`https://api.imgbb.com/1/upload?key=${imgbbKey}`, formData.toString(), {
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
-            timeout: 30000
-          });
-          if (imgbbRes.data?.data?.url) {
-            console.log(`[Upload] Image uploaded to ImgBB at full original quality: ${imgbbRes.data.data.url}`);
-            return res.json({ url: imgbbRes.data.data.url });
-          }
-        } catch (imgbbErr: any) {
-          console.warn("[Upload] ImgBB upload failed, saving to local static storage:", imgbbErr.message);
-        }
-      }
-
-      // Save raw uncompressed image directly to uploads folder
+      // Save image directly to local static storage immediately (instant, zero network latency)
       let ext = "png";
       let base64Data = imageBase64;
       if (imageBase64.startsWith("data:")) {
@@ -345,12 +324,12 @@ async function startServer() {
         ext = filename.split(".").pop().toLowerCase();
       }
 
-      const safeName = `match_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
+      const safeName = `banner_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${ext}`;
       const filePath = path.join(uploadsDir, safeName);
       
       fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
       const directUrl = `/uploads/${safeName}`;
-      console.log(`[Upload] Image saved locally at 100% original quality: ${directUrl}`);
+      console.log(`[Upload] Image saved locally instantly: ${directUrl}`);
       
       return res.json({ url: directUrl });
     } catch (error: any) {

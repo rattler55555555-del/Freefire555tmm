@@ -111,10 +111,13 @@ export default function App() {
 
   useEffect(() => {
     let unsubscribeUser: (() => void) | null = null;
+    let unsubscribeRegs: (() => void) | null = null;
 
     const seedDatabase = async (email: string, uid: string) => {
       const isAdmin = email?.toLowerCase().trim() === "battlegrid2.0@gmail.com";
       if (!isAdmin) return;
+      if (sessionStorage.getItem('kg_db_seed_checked')) return;
+      sessionStorage.setItem('kg_db_seed_checked', 'true');
       try {
         // Independence seeding for games
         const gamesSnap = await getDocs(collection(db, 'games'));
@@ -192,9 +195,9 @@ export default function App() {
               newUserReward: 10
             },
             support: {
-              whatsapp: 'https://wa.me/910000000000',
-              telegram: 'https://t.me/khelgalli',
-              email: 'support@khelgalli.com'
+              whatsapp: 'https://whatsapp.com/channel/0029Vb8LgeD0QeasJdM18j38',
+              telegram: 'https://whatsapp.com/channel/0029Vb8LgeD0QeasJdM18j38',
+              email: 'battlegrid2.0@gmail.com'
             }
           });
           console.log('App settings seeded');
@@ -228,96 +231,105 @@ export default function App() {
         unsubscribeUser();
         unsubscribeUser = null;
       }
+      if (unsubscribeRegs) {
+        unsubscribeRegs();
+        unsubscribeRegs = null;
+      }
 
       if (firebaseUser) {
-        // Seed if admin
+        // Seed if admin (cached check)
         seedDatabase(firebaseUser.email || '', firebaseUser.uid);
 
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         
-        // Listen for user changes (balance, etc.)
+        // Listen for user changes (balance, etc.) with non-blocking instant UI resolution
         unsubscribeUser = onSnapshot(userDocRef, async (userDoc) => {
+          let userData: any;
           if (userDoc.exists()) {
-            const data = userDoc.data() as any;
-            
-            // Migration check: if user doesn't have the new wallet structure
-            if (!data.wallet) {
-              console.log("Migrating user wallet structure...");
-              const migratedWallet = {
-                deposit: data.walletBalance || 0,
-                winnings: data.winnings || 0,
-                bonus: data.bonus || 0
-              };
-              
-              // Only migrate if we have some old data, otherwise use defaults
-              if (data.walletBalance === undefined && data.winnings === undefined && data.bonus === undefined) {
-                Object.assign(migratedWallet, DEFAULT_USER_DATA.wallet);
-              }
-
-              const batch = writeBatch(db);
-              batch.update(userDocRef, {
-                wallet: migratedWallet
-              });
-              await batch.commit();
-              // The next snapshot will have the right data
-              return;
-            }
-
-            setUser({ id: userDoc.id, ...data } as User);
-            setIsLoggedIn(true);
-            setLoading(false);
-
-            // Process referral rewards if eligible
-            if (data.referredBy && !data.referralClaimed) {
-              processReferralReward(data, firebaseUser.uid);
-            }
-            
-            // Immediate redirect to admin for battlegrid2.0@gmail.com, or home for others
-            if (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/') {
-              if (firebaseUser.email?.toLowerCase().trim() === 'battlegrid2.0@gmail.com') {
-                console.log("Admin logged in -> Opening Admin Panel directly...");
-                navigate('/admin');
-              } else {
-                console.log("Redirecting to home...");
-                navigate('/home');
-              }
-            }
+            userData = userDoc.data();
           } else {
-            // For Google Auth or unexpected cases, create default profile
             const isAdmin = firebaseUser.email?.toLowerCase().trim() === 'battlegrid2.0@gmail.com';
-            const newUser: User = {
-              username: firebaseUser.displayName || `Gamer_${firebaseUser.uid.slice(0, 5)}`,
+            userData = {
+              username: firebaseUser.displayName || (isAdmin ? 'Admin' : `Gamer_${firebaseUser.uid.slice(0, 5)}`),
               email: firebaseUser.email || '',
-              phone: firebaseUser.phoneNumber || '',
+              phone: firebaseUser.phoneNumber || '9999999999',
               ...DEFAULT_USER_DATA,
               isAdmin: isAdmin
             };
-            await setDoc(userDocRef, {
-              ...newUser,
-              createdAt: serverTimestamp(),
-            });
-            // Snapshot will pick this up
+            setDoc(userDocRef, {
+              ...userData,
+              createdAt: serverTimestamp()
+            }, { merge: true }).catch(() => {});
+          }
+
+          // Ensure valid wallet structure exists
+          if (!userData.wallet) {
+            userData.wallet = {
+              deposit: userData.walletBalance || 100,
+              winnings: userData.winnings || 0,
+              bonus: userData.bonus || 100
+            };
+            updateDoc(userDocRef, { wallet: userData.wallet }).catch(() => {});
+          }
+
+          const completeUser = { id: firebaseUser.uid, ...userData } as User;
+          setUser(completeUser);
+          setIsLoggedIn(true);
+          setLoading(false);
+
+          // Process referral rewards if eligible
+          if (userData.referredBy && !userData.referralClaimed) {
+            processReferralReward(userData, firebaseUser.uid);
+          }
+          
+          // Immediate redirect to admin for battlegrid2.0@gmail.com, or home for others
+          if (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/') {
+            if (firebaseUser.email?.toLowerCase().trim() === 'battlegrid2.0@gmail.com') {
+              console.log("Admin logged in -> Opening Admin Panel directly...");
+              navigate('/admin', { replace: true });
+            } else {
+              console.log("Redirecting to home...");
+              navigate('/home', { replace: true });
+            }
           }
         }, (error) => {
-          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+          console.warn("User onSnapshot warning, using fast fallback:", error);
+          const isAdmin = firebaseUser.email?.toLowerCase().trim() === 'battlegrid2.0@gmail.com';
+          setUser({
+            id: firebaseUser.uid,
+            username: isAdmin ? 'Admin' : (firebaseUser.displayName || 'Gamer'),
+            email: firebaseUser.email || '',
+            phone: '9999999999',
+            ...DEFAULT_USER_DATA,
+            isAdmin: isAdmin
+          } as User);
+          setIsLoggedIn(true);
           setLoading(false);
+          if (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/') {
+            navigate(isAdmin ? '/admin' : '/home', { replace: true });
+          }
         });
 
-        // Also fetch registrations
+        // Real-time registrations listener for instant match start notifications
         try {
           const q = query(collection(db, 'registrations'), where('userId', '==', firebaseUser.uid));
-          const regSnap = await getDocs(q);
-          const matchIds = regSnap.docs.map(doc => doc.data().tournamentId);
-          setJoinedMatchIds(matchIds);
+          unsubscribeRegs = onSnapshot(q, (regSnap) => {
+            const matchIds = regSnap.docs
+              .map(d => d.data().tournamentId || d.data().matchId)
+              .filter(Boolean);
+            setJoinedMatchIds(matchIds);
+          }, (err) => {
+            console.warn("Registrations listener notice:", err);
+          });
         } catch (error) {
-          console.error("Error fetching registrations:", error);
+          console.error("Error subscribing to registrations:", error);
         }
       } else {
         setIsLoggedIn(false);
         setUser(null);
         setJoinedMatchIds([]);
         if (!['/login', '/signup'].includes(location.pathname)) {
-          navigate('/login');
+          navigate('/login', { replace: true });
         }
         setLoading(false);
       }
@@ -326,8 +338,17 @@ export default function App() {
     return () => {
       unsubscribeAuth();
       if (unsubscribeUser) unsubscribeUser();
+      if (unsubscribeRegs) unsubscribeRegs();
     };
   }, []);
+
+  // Back button protection: if authenticated, don't show login/signup screen
+  useEffect(() => {
+    if (isLoggedIn && user && (location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/')) {
+      const isAdmin = user.email?.toLowerCase().trim() === 'battlegrid2.0@gmail.com';
+      navigate(isAdmin ? '/admin' : '/home', { replace: true });
+    }
+  }, [isLoggedIn, user, location.pathname, navigate]);
 
   const handleLogin = () => {
     console.log("Redirecting to home...");

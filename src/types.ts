@@ -107,6 +107,9 @@ export interface User {
 
 export interface Banner {
   id?: string;
+  title?: string;
+  subtitle?: string;
+  badgeText?: string;
   imageUrl: string;
   redirectUrl?: string;
   type: 'main' | 'offer' | 'freefire';

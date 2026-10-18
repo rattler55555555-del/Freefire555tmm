@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X, Key, Trophy, Gift, ShieldCheck, Zap, Wallet, ChevronRight, CheckCircle2, Smartphone } from 'lucide-react';
 import { db } from '../lib/firebase';
-import { collection, onSnapshot, query, orderBy, limit, doc, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit, doc, updateDoc, arrayUnion, where } from 'firebase/firestore';
 import { Page, AppNotification, User } from '../types';
 import { 
   registerNotificationServiceWorker, 
@@ -175,6 +175,142 @@ export default function GlobalNotificationListener({
 
     return () => unsub();
   }, [user?.id, JSON.stringify(joinedMatchIds)]);
+
+  // Real-time Match Starting & Room ID Watcher for registered tournaments
+  useEffect(() => {
+    if (!joinedMatchIds || joinedMatchIds.length === 0) return;
+
+    let cachedMatches: Array<{ id: string; [key: string]: any }> = [];
+
+    const checkMatchesCountdown = () => {
+      const now = Date.now();
+      cachedMatches.forEach((match) => {
+        const matchId = match.id;
+        if (!joinedMatchIds.includes(matchId)) return;
+
+        // 1. Check Match Start Time (15-min and 5-min alert)
+        let matchTimeMs: number | null = null;
+        if (match.time) {
+          const parsed = new Date(match.time).getTime();
+          if (!isNaN(parsed)) matchTimeMs = parsed;
+        }
+        if (!matchTimeMs && match.matchDate) {
+          const parsed = new Date(match.matchDate).getTime();
+          if (!isNaN(parsed)) matchTimeMs = parsed;
+        }
+
+        if (matchTimeMs) {
+          const diffMinutes = (matchTimeMs - now) / (1000 * 60);
+
+          // 15-minute alert
+          if (diffMinutes <= 15 && diffMinutes > 5) {
+            const alertedKey = `notified_start_15_${matchId}`;
+            if (!sessionStorage.getItem(alertedKey)) {
+              sessionStorage.setItem(alertedKey, 'true');
+              const mins = Math.max(1, Math.round(diffMinutes));
+              const title = `🚨 Match Starting Soon (${mins}m)`;
+              const message = `Your registered match "${match.title || 'Esports Match'}" starts in ${mins} minutes! Get ready and enter room.`;
+
+              playAlertSound();
+              setActivePopup({
+                id: `start15_${matchId}`,
+                title,
+                message,
+                type: 'match_alert',
+                audience: 'match',
+                targetMatchId: matchId,
+                actionPage: Page.MATCH_DETAILS
+              });
+
+              triggerMobileStatusBarNotification(title, message, {
+                tag: `match-start-15-${matchId}`,
+                targetMatchId: matchId,
+                actionPage: Page.MATCH_DETAILS,
+                icon: '/arena_khel_logo.png'
+              });
+            }
+          }
+
+          // 5-minute urgent alert
+          if (diffMinutes <= 5 && diffMinutes >= -5) {
+            const alertedKey = `notified_start_5_${matchId}`;
+            if (!sessionStorage.getItem(alertedKey)) {
+              sessionStorage.setItem(alertedKey, 'true');
+              const mins = Math.max(1, Math.round(diffMinutes));
+              const title = `⏰ Final Call: Match Starts in ${mins}m!`;
+              const message = `Match "${match.title || 'Esports Match'}" is starting now! Check Room ID & Password immediately.`;
+
+              playAlertSound();
+              setActivePopup({
+                id: `start5_${matchId}`,
+                title,
+                message,
+                type: 'match_alert',
+                audience: 'match',
+                targetMatchId: matchId,
+                actionPage: Page.MATCH_DETAILS
+              });
+
+              triggerMobileStatusBarNotification(title, message, {
+                tag: `match-start-5-${matchId}`,
+                targetMatchId: matchId,
+                actionPage: Page.MATCH_DETAILS,
+                icon: '/arena_khel_logo.png'
+              });
+            }
+          }
+        }
+
+        // 2. Room ID & Password Declared Alert
+        if (match.roomId && match.roomPassword) {
+          const roomAlertKey = `notified_room_${matchId}_${match.roomId}`;
+          if (!sessionStorage.getItem(roomAlertKey)) {
+            sessionStorage.setItem(roomAlertKey, 'true');
+            const title = `🔑 Room ID & Password Declared!`;
+            const message = `Match "${match.title}": Room ID: ${match.roomId} | Password: ${match.roomPassword}. Tap to copy credentials.`;
+
+            playAlertSound();
+            setActivePopup({
+              id: `room_${matchId}`,
+              title,
+              message,
+              type: 'match_alert',
+              audience: 'match',
+              targetMatchId: matchId,
+              actionPage: Page.MATCH_DETAILS
+            });
+
+            triggerMobileStatusBarNotification(title, message, {
+              tag: `match-room-${matchId}`,
+              targetMatchId: matchId,
+              actionPage: Page.MATCH_DETAILS,
+              icon: '/arena_khel_logo.png'
+            });
+          }
+        }
+      });
+    };
+
+    const q = query(
+      collection(db, 'matches'),
+      where('status', 'in', ['upcoming', 'room_ready', 'live'])
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      cachedMatches = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      checkMatchesCountdown();
+    }, (err) => {
+      // ignore
+    });
+
+    // Run interval check every 25 seconds for time countdown
+    const intervalTimer = setInterval(checkMatchesCountdown, 25000);
+
+    return () => {
+      unsub();
+      clearInterval(intervalTimer);
+    };
+  }, [JSON.stringify(joinedMatchIds)]);
 
   const handleEnablePermission = async () => {
     setIsRequestingPermission(true);

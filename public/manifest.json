@@ -1,18 +1,43 @@
 {
-  "name": "Khel Galli - Free Fire Esports Tournaments",
-  "short_name": "Khel Galli",
-  "description": "Join daily Free Fire custom room matches, CS tournaments, and earn instant cash rewards.",
-  "start_url": "/",
+  "name": "Arena Khel - Esports Tournaments",
+  "short_name": "Arena Khel",
+  "description": "Join daily Arena Khel competitive tournaments, custom rooms, and earn real rewards.",
+  "start_url": "/home",
   "display": "standalone",
   "background_color": "#071328",
-  "theme_color": "#7c3aed",
+  "theme_color": "#071328",
   "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["games", "entertainment", "sports"],
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/arena_khel_logo.png",
       "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tournaments",
+      "short_name": "Matches",
+      "description": "View live and upcoming tournaments",
+      "url": "/tournaments",
+      "icons": [{ "src": "/arena_khel_logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Wallet",
+      "short_name": "Wallet",
+      "description": "Deposit & Withdraw cash",
+      "url": "/wallet",
+      "icons": [{ "src": "/arena_khel_logo.png", "sizes": "192x192" }]
     }
   ]
 }

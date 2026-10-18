@@ -8,9 +8,11 @@ import { useModalBackHandler } from '../hooks/useModalBackHandler';
 
 import HomeHeader from '../components/HomeHeader';
 import AnnouncementBar from '../components/AnnouncementBar';
+import AndroidInstallBanner from '../components/AndroidInstallBanner';
 import HeroBannerCarousel from '../components/HeroBannerCarousel';
 import MyMatches from '../components/MyMatches';
 import EsportsGamesGrid from '../components/EsportsGamesGrid';
+import HomeLeaderboard from '../components/HomeLeaderboard';
 import RulesModal from '../components/RulesModal';
 import NotificationsModal from '../components/NotificationsModal';
 
@@ -68,15 +70,18 @@ export default function Home({ user, onPageChange, joinedMatchIds }: HomeProps) 
       }
     );
 
-    // Realtime active banners
+    // Realtime active banners (instant live sync without inequality index locks)
     const unsubBanners = onSnapshot(
-      query(collection(db, 'banners'), where('isActive', '!=', false), orderBy('order', 'asc')),
+      collection(db, 'banners'),
       (snapshot) => {
-        const fetchedBanners = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Banner));
+        const fetchedBanners = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() } as Banner))
+          .filter((b) => b.isActive !== false)
+          .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
         setBanners(fetchedBanners);
         setHeroBanners(fetchedBanners.filter((b) => b.type === 'main' || b.type === 'offer'));
       },
-      (err) => handleFirestoreError(err, OperationType.LIST, 'banners')
+      (err) => console.warn('Banner fetch notice:', err)
     );
 
     return () => {
@@ -133,6 +138,9 @@ export default function Home({ user, onPageChange, joinedMatchIds }: HomeProps) 
         }}
       />
 
+      {/* 2.3 Android Official App Install Banner */}
+      <AndroidInstallBanner />
+
       {/* 2.5 WhatsApp Support & Official Channel Card */}
       <section className="px-4 sm:px-5 mt-2.5">
         <a
@@ -176,6 +184,9 @@ export default function Home({ user, onPageChange, joinedMatchIds }: HomeProps) 
         matches={matches}
         onPageChange={onPageChange}
       />
+
+      {/* 6. Front Bottom Leaderboard (Top Champions & Winners) */}
+      <HomeLeaderboard onPageChange={onPageChange} />
 
       {/* Prize Pool Breakdown Modal */}
       <AnimatePresence>

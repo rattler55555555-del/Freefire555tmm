@@ -1,11 +1,45 @@
-// Service Worker for Khel Galli Mobile Notifications
+// Service Worker for Arena Khel Android Mobile Application & Notifications
+const CACHE_NAME = 'arena-khel-v1';
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/arena_khel_logo.png',
+  '/icon.svg'
+];
 
 self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS)).catch(() => {})
+  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
   event.waitUntil(self.clients.claim());
+});
+
+// Network first, falling back to cache
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('/api/')) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone)).catch(() => {});
+        }
+        return networkResponse;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });
 
 // Listen for messages from web application to display mobile status bar notification
@@ -14,11 +48,11 @@ self.addEventListener('message', (event) => {
     const { title, body, icon, badge, data, tag } = event.data;
     
     const options = {
-      body: body || 'You have a new update from Khel Galli',
-      icon: icon || '/icon.svg',
+      body: body || 'You have a new update from Arena Khel',
+      icon: icon || '/arena_khel_logo.png',
       badge: badge || '/icon.svg',
       vibrate: [200, 100, 200, 100, 200],
-      tag: tag || 'khel-galli-' + Date.now(),
+      tag: tag || 'arena-khel-' + Date.now(),
       renotify: true,
       requireInteraction: false,
       data: data || {},
@@ -28,16 +62,16 @@ self.addEventListener('message', (event) => {
       ]
     };
 
-    self.registration.showNotification(title || 'Khel Galli Alert', options);
+    self.registration.showNotification(title || 'Arena Khel Alert', options);
   }
 });
 
 // Handle push events (for background push notifications)
 self.addEventListener('push', (event) => {
   let notifData = {
-    title: 'Khel Galli Notification',
+    title: 'Arena Khel Notification',
     body: 'New match update available',
-    icon: '/icon.svg',
+    icon: '/arena_khel_logo.png',
     badge: '/icon.svg',
     data: {}
   };
@@ -54,10 +88,10 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(notifData.title, {
       body: notifData.body,
-      icon: notifData.icon || '/icon.svg',
+      icon: notifData.icon || '/arena_khel_logo.png',
       badge: notifData.badge || '/icon.svg',
       vibrate: [200, 100, 200],
-      tag: notifData.tag || 'khel-galli-push',
+      tag: notifData.tag || 'arena-khel-push',
       renotify: true,
       data: notifData.data || {}
     })
@@ -76,7 +110,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If a window is already open, focus it
       for (const client of clientList) {
         if ('focus' in client) {
           if (event.notification.data && event.notification.data.actionPage) {
@@ -89,7 +122,6 @@ self.addEventListener('notificationclick', (event) => {
           return client.focus();
         }
       }
-      // Otherwise open a new window
       if (self.clients.openWindow) {
         return self.clients.openWindow(targetUrl);
       }

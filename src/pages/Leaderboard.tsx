@@ -48,15 +48,20 @@ export default function Leaderboard() {
 
     const q = query(
       collection(db, 'transactions'),
-      where('type', '==', 'win'),
-      where('createdAt', '>=', startDate)
+      where('type', '==', 'win')
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      setPeriodTransactions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const allWins = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const filtered = allWins.filter((tx: any) => {
+        if (!tx.createdAt) return true;
+        const txTime = tx.createdAt?.toDate ? tx.createdAt.toDate().getTime() : new Date(tx.createdAt).getTime();
+        return txTime >= startDate.getTime();
+      });
+      setPeriodTransactions(filtered);
       setLoading(false);
     }, (error) => {
-      console.error("Leaderboard trans error:", error);
+      console.warn("Leaderboard trans stream notice:", error);
       setLoading(false);
     });
 
