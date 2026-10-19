@@ -123,7 +123,7 @@ export default function WalletPage({ user, onPageChange }: WalletPageProps) {
       <div className="px-4 sm:px-5 pt-4 sm:pt-6 space-y-4">
         
         {/* ========================================================================= */}
-        {/* 1. TOP HEADER (White card with Gamepad, Server Online, KHEL GALLI, Balance) */}
+        {/* 1. TOP HEADER (White card with Gamepad, Server Online, ARENA KHEL, Balance) */}
         {/* ========================================================================= */}
         <header className="bg-white border border-[#E5E7EB] rounded-2xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -139,10 +139,10 @@ export default function WalletPage({ user, onPageChange }: WalletPageProps) {
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#667085]">
-                  Server Online
+                <span className="text-[9px] font-extrabold uppercase tracking-widest text-[#0284c7]">
+                  Firebase Cloud • Ultra Fast
                 </span>
-                <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#16A34A] shadow-[0_0_6px_rgba(22,163,74,0.8)] animate-pulse" />
               </div>
               <h1 className="text-base sm:text-lg font-black tracking-tight text-[#172033] leading-none mt-0.5">
                 ARENA <span className="text-orange-500">KHEL</span>

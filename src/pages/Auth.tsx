@@ -169,8 +169,8 @@ export default function Auth({ onLogin }: AuthProps) {
           }
         }
 
-        // If admin account doesn't exist yet, auto-register it!
-        if (!signedIn && isAdminEmail && lastError?.code === 'auth/user-not-found') {
+        // If admin login failed with all passwords, try auto-create in case user doesn't exist yet
+        if (!signedIn && isAdminEmail) {
           try {
             const regPwd = password.length >= 6 ? password : `${password}55`;
             const userCredential = await withTimeout(
@@ -189,7 +189,7 @@ export default function Auth({ onLogin }: AuthProps) {
             }, { merge: true });
             signedIn = true;
           } catch (regErr: any) {
-            console.warn("Admin auto-create error:", regErr);
+            console.warn("Admin create check:", regErr.code);
           }
         }
 
@@ -276,14 +276,17 @@ export default function Auth({ onLogin }: AuthProps) {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="mb-4"
+            className="mb-3"
           >
-            <SafeImage 
-              src="https://i.ibb.co/n8jPYbMP/image.png" 
-              alt="Logo" 
-              className="w-24 h-auto"
-            />
+            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-cyan-500 to-orange-500 p-0.5 shadow-2xl shadow-cyan-500/30 flex items-center justify-center overflow-hidden">
+              <img 
+                src="/arena_khel_logo.png" 
+                alt="Arena Khel" 
+                className="w-full h-full object-cover rounded-[22px]"
+              />
+            </div>
           </motion.div>
+          <h1 className="text-xl font-black text-white uppercase tracking-tight">Arena <span className="text-orange-500">Khel</span></h1>
           <p className="text-[10px] text-neutral-500 uppercase tracking-widest mt-1">Start winning real rewards</p>
         </div>
 

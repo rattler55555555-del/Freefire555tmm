@@ -90,8 +90,8 @@ export default function GameModes({ onPageChange }: GameModesProps) {
                 {game ? `${game.title} ARENA`.toUpperCase() : 'GAMING ARENA'}
               </h2>
               <div className="flex items-center justify-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80">Servers Optimal</span>
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-400">Firebase Cloud • Ultra-Fast Server</span>
               </div>
             </div>
 
@@ -138,7 +138,7 @@ export default function GameModes({ onPageChange }: GameModesProps) {
               >
                 {/* Mode Background Image - object-cover ensures no stretch */}
                 <SafeImage 
-                  src={mode.image || game?.image || 'https://i.ibb.co/v4v8Q5N/freefire.jpg'} 
+                  src={mode.image || game?.image || 'https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=800&auto=format&fit=crop'} 
                   alt={mode.title} 
                   className="absolute inset-0 w-full h-full"
                   imgClassName="transition-transform duration-700 group-hover:scale-110"

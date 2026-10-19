@@ -12,7 +12,6 @@ import AndroidInstallBanner from '../components/AndroidInstallBanner';
 import HeroBannerCarousel from '../components/HeroBannerCarousel';
 import MyMatches from '../components/MyMatches';
 import EsportsGamesGrid from '../components/EsportsGamesGrid';
-import HomeLeaderboard from '../components/HomeLeaderboard';
 import RulesModal from '../components/RulesModal';
 import NotificationsModal from '../components/NotificationsModal';
 
@@ -179,14 +178,11 @@ export default function Home({ user, onPageChange, joinedMatchIds }: HomeProps) 
         onPageChange={onPageChange}
       />
 
-      {/* 5. Esports Games (3-Column Grid with Tournament/Solo toggle) */}
+      {/* 5. Esports Games (2-Column Rectangular Cards) */}
       <EsportsGamesGrid
         matches={matches}
         onPageChange={onPageChange}
       />
-
-      {/* 6. Front Bottom Leaderboard (Top Champions & Winners) */}
-      <HomeLeaderboard onPageChange={onPageChange} />
 
       {/* Prize Pool Breakdown Modal */}
       <AnimatePresence>

@@ -14,21 +14,21 @@ export default function Header({ user, onPageChange }: HeaderProps) {
         <div className="flex items-center gap-3">
           <div 
             onClick={() => onPageChange(Page.PROFILE)}
-            className="w-12 h-12 rounded-2xl overflow-hidden shadow-2xl shadow-purple-500/10 cursor-pointer border border-white/10"
+            className="w-12 h-12 rounded-2xl overflow-hidden shadow-2xl shadow-cyan-500/10 cursor-pointer border border-cyan-500/30 p-0.5 bg-gradient-to-tr from-cyan-500 to-orange-500"
           >
             <SafeImage 
-              src="https://i.ibb.co/n8jPYbMP/image.png" 
-              alt="Logo" 
-              className="w-full h-full"
+              src="/arena_khel_logo.png" 
+              alt="Arena Khel" 
+              className="w-full h-full rounded-[14px]"
             />
           </div>
           <div>
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[9px] text-zinc-500 font-black uppercase tracking-widest leading-none">Server Online</span>
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
+              <span className="text-[9px] text-cyan-400 font-black uppercase tracking-widest leading-none">Firebase Cloud • Ultra Fast</span>
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse" />
             </div>
-            <h1 className="text-xl font-bold tracking-tighter uppercase leading-none text-white">
-              Khel <span className="text-purple-500">Galli</span>
+            <h1 className="text-xl font-black tracking-tight uppercase leading-none text-white">
+              Arena <span className="text-orange-500">Khel</span>
             </h1>
           </div>
         </div>

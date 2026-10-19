@@ -180,16 +180,31 @@ export default function EsportsGamesGrid({ matches, onPageChange }: EsportsGames
       {/* 2-Column Horizontal Rectangular Cards Grid */}
       <div className="grid grid-cols-2 gap-3 sm:gap-3.5">
         {displayModes.map((mode, idx) => {
-          // Dynamic active match count
-          const liveCount = matches.filter(
-            (m) =>
-              (m.status === 'upcoming' || m.status === 'room_ready' || m.status === 'live') &&
-              (m.modeId === mode.id ||
-                m.mode?.toLowerCase() === mode.title.toLowerCase() ||
-                m.section?.toLowerCase() === (mode.category || mode.subtitle || '').toLowerCase())
-          ).length;
+          // Exactly count real matches created for this mode
+          const modeId = (mode.id || '').toLowerCase();
+          const modeTitle = (mode.title || '').toLowerCase();
+          const modeCategory = (mode.category || '').toLowerCase();
 
-          const displayCount = liveCount > 0 ? liveCount : (mode.count || (20 + (idx * 7) % 45));
+          const liveCount = matches.filter((m) => {
+            const mStatus = (m.status as string) || 'upcoming';
+            const isActive = mStatus !== 'completed' && mStatus !== 'cancelled';
+            if (!isActive) return false;
+
+            const mModeId = (m.modeId || '').toLowerCase();
+            const mMode = (m.mode || '').toLowerCase();
+            const mSection = (m.section || '').toLowerCase();
+            const mTitle = (m.title || '').toLowerCase();
+
+            return (
+              (mModeId && mModeId === modeId) ||
+              (mMode && (mMode === modeTitle || modeTitle.includes(mMode) || mMode.includes(modeTitle))) ||
+              (mSection && (mSection === modeCategory || mSection === modeTitle || modeTitle.includes(mSection))) ||
+              (mTitle && (mTitle.includes(modeTitle) || modeTitle.includes(mTitle)))
+            );
+          }).length;
+
+          // Strictly real count: if 1 match created, show 1. If 0 matches, show 0.
+          const displayCount = liveCount;
           const bannerHeadline = mode.bannerText || (mode.subtitle && mode.subtitle.includes('TOURNAMENT') ? mode.subtitle : `${mode.title} TOURNAMENT`);
 
           return (

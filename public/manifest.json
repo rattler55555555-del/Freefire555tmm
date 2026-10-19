@@ -1,4 +1,5 @@
 {
+  "id": "/",
   "name": "Arena Khel - Esports Tournaments",
   "short_name": "Arena Khel",
   "description": "Join daily Arena Khel competitive tournaments, custom rooms, and earn real rewards.",
@@ -9,19 +10,26 @@
   "orientation": "portrait",
   "scope": "/",
   "lang": "en",
+  "prefer_related_applications": false,
   "categories": ["games", "entertainment", "sports"],
   "icons": [
     {
       "src": "/arena_khel_logo.png",
       "sizes": "192x192 512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/arena_khel_logo.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "shortcuts": [

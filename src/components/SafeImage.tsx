@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Loader2, Gamepad2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface SafeImageProps {
   src?: string;
@@ -12,26 +12,64 @@ interface SafeImageProps {
   showLoader?: boolean;
 }
 
-const APP_LOGO = "https://i.ibb.co/XxVkbcW8/logo.png";
+// Default Arena Khel official logo
+const ARENA_KHEL_LOGO = "/arena_khel_logo.png";
+
+// In-memory cache of already resolved image URLs across component mounts
+const loadedImagesCache = new Set<string>();
 
 export default function SafeImage({ 
   src, 
-  alt = "Image", 
+  alt = "Arena Khel", 
   className = "", 
   imgClassName = "",
-  fallbackSrc = APP_LOGO,
+  fallbackSrc = ARENA_KHEL_LOGO,
   objectFit = 'cover',
   showLoader = true
 }: SafeImageProps) {
-  const [isLoading, setIsLoading] = useState(true);
+  // If the image was previously cached/loaded, start with isLoading = false to prevent UI flicker
+  const isPreCached = src ? loadedImagesCache.has(src) : false;
+  const [isLoading, setIsLoading] = useState(!isPreCached);
   const [error, setError] = useState(false);
-  const [currentSrc, setCurrentSrc] = useState<string | undefined>(src);
+  const [currentSrc, setCurrentSrc] = useState<string | undefined>(src || fallbackSrc);
 
   useEffect(() => {
+    if (!src) {
+      setError(true);
+      setCurrentSrc(fallbackSrc);
+      setIsLoading(false);
+      return;
+    }
+
+    if (loadedImagesCache.has(src)) {
+      setIsLoading(false);
+      setError(false);
+      setCurrentSrc(src);
+      return;
+    }
+
     setIsLoading(true);
     setError(false);
     setCurrentSrc(src);
-  }, [src]);
+
+    // Preload image in memory
+    const preloader = new Image();
+    preloader.src = src;
+    preloader.onload = () => {
+      loadedImagesCache.add(src);
+      setIsLoading(false);
+    };
+    preloader.onerror = () => {
+      setError(true);
+      setCurrentSrc(fallbackSrc);
+      setIsLoading(false);
+    };
+
+    return () => {
+      preloader.onload = null;
+      preloader.onerror = null;
+    };
+  }, [src, fallbackSrc]);
 
   const handleError = () => {
     if (!error) {
@@ -42,56 +80,41 @@ export default function SafeImage({
   };
 
   const handleLoad = () => {
+    if (src) loadedImagesCache.add(src);
     setIsLoading(false);
   };
 
-  // If no source is provided at all, fallback immediately
-  useEffect(() => {
-    if (!src) {
-      setError(true);
-      setCurrentSrc(fallbackSrc);
-      setIsLoading(false);
-    }
-  }, [src, fallbackSrc]);
-
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      {/* Background / Placeholder during loading */}
-      <div className="absolute inset-0 bg-neutral-900 flex flex-col items-center justify-center p-4">
-        <img 
-          src={APP_LOGO} 
-          alt="App Logo Placeholder" 
-          className="w-1/3 max-w-[64px] opacity-20 grayscale"
-        />
-        {isLoading && showLoader && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <Loader2 className="text-purple-500 animate-spin" size={20} />
-          </div>
-        )}
-      </div>
-
-      {/* Main Image */}
-      <AnimatePresence mode="wait">
-        <motion.img
-          key={currentSrc}
-          src={currentSrc}
-          alt={alt}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isLoading ? 0 : 1 }}
-          transition={{ duration: 0.4 }}
-          onLoad={handleLoad}
-          onError={handleError}
-          className={`w-full h-full object-${objectFit} relative z-10 ${imgClassName}`}
-          referrerPolicy="no-referrer"
-        />
-      </AnimatePresence>
-
-      {/* Error State Overlay (Optional debug hint) */}
-      {error && (
-        <div className="absolute top-2 right-2 z-20 pointer-events-none opacity-50">
-          {/* We could show a small icon here if we want to indicate failure, but user wants clean fallback */}
+      {/* Background / Smooth Placeholder during initial lazy loading */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-[#09152b] flex flex-col items-center justify-center p-4 z-0">
+          <img 
+            src={ARENA_KHEL_LOGO} 
+            alt="Arena Khel Logo Placeholder" 
+            className="w-12 h-12 object-contain opacity-25 grayscale animate-pulse"
+          />
+          {showLoader && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-xs">
+              <Loader2 className="text-cyan-500 animate-spin" size={18} />
+            </div>
+          )}
         </div>
       )}
+
+      {/* Main Image with Lazy Loading & Memory Caching */}
+      <img
+        src={currentSrc}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onLoad={handleLoad}
+        onError={handleError}
+        className={`w-full h-full object-${objectFit} relative z-10 transition-opacity duration-300 ${
+          isLoading ? 'opacity-0' : 'opacity-100'
+        } ${imgClassName}`}
+        referrerPolicy="no-referrer"
+      />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { collection, query, orderBy, limit, onSnapshot, getDocs, where } from 'f
 import { User } from '../types';
 import SafeImage from '../components/SafeImage';
 
-const APP_LOGO = "https://i.ibb.co/XxVkbcW8/logo.png";
+const APP_LOGO = "/arena_khel_logo.png";
 
 type LeaderboardTab = 'weekly' | 'monthly';
 

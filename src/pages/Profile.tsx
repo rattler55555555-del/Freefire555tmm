@@ -113,21 +113,13 @@ export default function ProfilePage({ user, onPageChange, onLogout }: ProfilePag
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.3 }}
-            className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1 bg-gradient-to-b from-[#1b2b4a] via-[#101a2f] to-[#060c18] border-2 border-white shadow-xl flex items-center justify-center overflow-hidden relative group"
+            className="w-28 h-28 sm:w-32 sm:h-32 rounded-full p-1 bg-gradient-to-b from-[#1b2b4a] via-[#101a2f] to-[#060c18] border-2 border-cyan-500/60 shadow-xl shadow-cyan-500/20 flex items-center justify-center overflow-hidden relative group"
           >
-            {/* Background Texture & Glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(#38bdf8_1px,transparent_1px)] [background-size:8px_8px] opacity-20" />
-            <div className="w-full h-full rounded-full bg-[#070e1c] flex flex-col items-center justify-center text-center p-2 relative z-10 border border-slate-700/60">
-              <span className="text-sm sm:text-base font-black italic uppercase tracking-wider text-white leading-none">
-                KHEL
-              </span>
-              <span className="text-xs sm:text-sm font-black italic uppercase tracking-wider text-amber-400 leading-none mt-1">
-                GALLI
-              </span>
-              <span className="text-[7px] font-black uppercase tracking-[0.2em] text-slate-400 leading-none mt-1">
-                ESPORTS
-              </span>
-            </div>
+            <img 
+              src="/arena_khel_logo.png" 
+              alt="Arena Khel Logo" 
+              className="w-full h-full object-cover rounded-full relative z-10" 
+            />
           </motion.div>
 
           {/* Username below emblem */}
