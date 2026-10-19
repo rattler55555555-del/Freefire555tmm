@@ -205,7 +205,6 @@ export default function EsportsGamesGrid({ matches, onPageChange }: EsportsGames
 
           // Strictly real count: if 1 match created, show 1. If 0 matches, show 0.
           const displayCount = liveCount;
-          const bannerHeadline = mode.bannerText || (mode.subtitle && mode.subtitle.includes('TOURNAMENT') ? mode.subtitle : `${mode.title} TOURNAMENT`);
 
           return (
             <motion.div
@@ -237,17 +236,7 @@ export default function EsportsGamesGrid({ matches, onPageChange }: EsportsGames
                   </span>
                 </div>
 
-                {/* Stylized Esports Tournament Headline */}
-                <div className="absolute inset-x-2 bottom-1.5 z-10 text-center">
-                  <h3 className="text-[11px] sm:text-[13px] font-black italic uppercase tracking-tight text-amber-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] leading-tight line-clamp-2">
-                    {bannerHeadline}
-                  </h3>
-                  <div className="flex items-center justify-center gap-1 mt-0.5 opacity-80">
-                    <span className="text-[7px] sm:text-[8px] font-black tracking-widest text-cyan-300 uppercase">
-                      ARENA KHEL
-                    </span>
-                  </div>
-                </div>
+                {/* Clean Banner Artwork without text overlay */}
               </div>
 
               {/* Bottom Solid Dark Navy Bar */}

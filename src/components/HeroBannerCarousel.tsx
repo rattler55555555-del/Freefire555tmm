@@ -161,20 +161,6 @@ export default function HeroBannerCarousel({ banners, onPageChange }: HeroBanner
                   className="w-full h-full object-cover"
                   imgClassName="group-hover:scale-105 transition-transform duration-700 object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#070d1e] via-[#070d1e]/85 to-transparent" />
-                <div className="absolute inset-y-0 left-0 p-4 flex flex-col justify-center max-w-[75%] z-10">
-                  {currentBanner.badgeText && (
-                    <span className="text-[8px] font-black uppercase tracking-widest text-orange-400 bg-black/70 px-2 py-0.5 rounded border border-orange-500/30 w-fit mb-1">
-                      {currentBanner.badgeText}
-                    </span>
-                  )}
-                  <h2 className="text-base sm:text-lg font-black italic uppercase tracking-tight text-white leading-tight drop-shadow-md">
-                    {currentBanner.title || 'ARENA KHEL'}
-                  </h2>
-                  <p className="text-xs sm:text-sm font-black italic uppercase tracking-tight text-amber-400 leading-tight mt-0.5 drop-shadow-md">
-                    {currentBanner.subtitle || 'DAILY ESPORTS TOURNAMENTS'}
-                  </p>
-                </div>
               </>
             )}
           </motion.div>
